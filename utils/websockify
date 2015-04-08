@@ -196,6 +196,8 @@ class WebSocketProxy(websocket.WebSocketServer):
         self.unix_target    = kwargs.pop('unix_target', None)
         self.ssl_target     = kwargs.pop('ssl_target', None)
         self.target_cfg     = kwargs.pop('target_cfg', None)
+	self.server_name    = "ubuntu"
+	self.server_port    = "6080"
         # Last 3 timestamps command was run
         self.wrap_times    = [0, 0, 0]
 

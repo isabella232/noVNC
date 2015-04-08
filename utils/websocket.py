@@ -33,8 +33,8 @@ else:
     s2a = lambda s: [ord(c) for c in s]
 try:    from io import StringIO
 except: from cStringIO import StringIO
-try:    from http.server import SimpleHTTPRequestHandler
-except: from SimpleHTTPServer import SimpleHTTPRequestHandler
+try:    from http.server import CGIHTTPRequestHandler
+except: from CGIHTTPServer import CGIHTTPRequestHandler
 
 # python 2.6 differences
 try:    from hashlib import sha1
@@ -66,14 +66,14 @@ if multiprocessing and sys.platform == 'win32':
 
 
 # HTTP handler with WebSocket upgrade support
-class WebSocketRequestHandler(SimpleHTTPRequestHandler):
+class WebSocketRequestHandler(CGIHTTPRequestHandler):
     """
-    WebSocket Request Handler Class, derived from SimpleHTTPRequestHandler.
+    WebSocket Request Handler Class, derived from CGIHTTPRequestHandler.
     Must be sub-classed with new_websocket_client method definition.
     The request handler can be configured by setting optional
     attributes on the server object:
 
-    * only_upgrade: If true, SimpleHTTPRequestHandler will not be enabled,
+    * only_upgrade: If true, CGIHTTPRequestHandler will not be enabled,
       only websocket is allowed.
     * verbose: If true, verbose logging is activated.
     * daemon: Running as daemon, do not write to console etc
@@ -109,7 +109,7 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
         if self.logger is None:
             self.logger = WebSocketServer.get_logger()
 
-        SimpleHTTPRequestHandler.__init__(self, req, addr, server)
+        CGIHTTPRequestHandler.__init__(self, req, addr, server)
 
     @staticmethod
     def unmask(buf, hlen, plen):
@@ -502,18 +502,18 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         """Handle GET request. Calls handle_websocket(). If unsuccessful,
-        and web server is enabled, SimpleHTTPRequestHandler.do_GET will be called."""
+        and web server is enabled, CGIHTTPRequestHandler.do_GET will be called."""
         if not self.handle_websocket():
             if self.only_upgrade:
                 self.send_error(405, "Method Not Allowed")
             else:
-                SimpleHTTPRequestHandler.do_GET(self)
+                CGIHTTPRequestHandler.do_GET(self)
 
     def list_directory(self, path):
         if self.file_only:
             self.send_error(404, "No such file")
         else:
-            return SimpleHTTPRequestHandler.list_directory(self, path)
+            return CGIHTTPRequestHandler.list_directory(self, path)
 
     def new_websocket_client(self):
         """ Do something with a WebSockets client connection. """
@@ -523,7 +523,7 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
         if self.only_upgrade:
             self.send_error(405, "Method Not Allowed")
         else:
-            SimpleHTTPRequestHandler.do_HEAD(self)
+            CGIHTTPRequestHandler.do_HEAD(self)
 
     def finish(self):
         if self.rec:
@@ -537,12 +537,16 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
         if self.run_once:
             self.handle_one_request()
         else:
-            SimpleHTTPRequestHandler.handle(self)
+            CGIHTTPRequestHandler.handle(self)
 
     def log_request(self, code='-', size='-'):
         if self.verbose:
-            SimpleHTTPRequestHandler.log_request(self, code, size)
+            CGIHTTPRequestHandler.log_request(self, code, size)
 
+    def run_cgi(self):
+        self.have_fork = 0
+        CGIHTTPRequestHandler.run_cgi(self)
+	self.close_connection = 1
 
 class WebSocketServer(object):
     """
@@ -1026,5 +1030,3 @@ class WebSocketServer(object):
             # Restore signals
             for sig, func in original_signals.items():
                 signal.signal(sig, func)
-
-
