@@ -60,6 +60,9 @@ Traffic Legend:
             msg += " (using SSL)"
         self.log_message(msg)
 
+	# Pass in unix target in the URL string
+        self.server.unix_target = self.path
+
         tsock = websocket.WebSocketServer.socket(self.server.target_host,
                                                  self.server.target_port,
                 connect=True, use_ssl=self.server.ssl_target, unix_socket=self.server.unix_target)
